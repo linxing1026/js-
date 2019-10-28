@@ -23,61 +23,19 @@
 		}
 	}
 	
+	//执行add函数，一次传入两个参数即可
 	add(1, 2) //3
-	curryingAdd(1, 2) //3
-	
 	//实际上把add函数的x,y两个参数变成了用一个函数先接收x，然后返回一个函数去处理y参数。
-	//柯里化有什么好处？？？
-	
-	//1.参数复用
-	function check(reg, txt) {
-		return reg.test(txt)
-	}
-	
-	check(/\d+/g, 'test') //false
-	check(/[a-z]+/g, 'test') //true
-	
-	//柯里化以后
-	function curryingCheck(reg) {
-		return function(txt) {
-			return reg.test(txt);
-		}
-	}
-	
-	var hasNumber = curryingCheck(/\d+/g);
-	var hasLetter = curryingCheck(/[a-z]+/g);
-	
-	hasNumber('test') //false
-	hasLetter('123') //true
-	
-	//2、延迟运行 就是不断的累积参数，最后执行
-	let calMonthCost = progressCurrying(function(...rest) {
-		let costList = Array.from(rest)
-		return costList.reduce((pre,cur) => {
-			return pre + cur
-		})
-	})
-	calMonthCost(1)
-	calMonthCost(2)
-	calMonthCost(3)
-	calMonthCost(4)
-	calMonthCost(5)
-	console.log(calMonthCost())
-	
-	//3、bind实现
-	Function.prototype.bind = function(context) {
-		var _this = this;
-		var args = Array.prototype.slice.call(arguments, 1);
-		return function() {
-			return _this.apply(context, args);
-		}
-	}
+	curryingAdd(1, 2) //3
 	
 	//初步封装
 	function curry(fn) {
+		//获取第一个方法内的全部参数
 		var args = [].slice.call(arguments, 1);
 		return function() {
+			//将后面方法里的全部参数和args合并
 			var newArgs = args.concat([].slice.call(arguments));
+			//把合并后的参数通过apply作为fn的参数执行
 			return fn.apply(this, newArgs);
 		}
 	}
@@ -119,5 +77,52 @@
 	res2(2) //并未执行
 	res2(3) //并未执行
 	console.log(res2()) //3
+	
+	//柯里化应用
+	//1.参数复用 解决了兼容性问题，但同时也会再来，使用的不便利性，不同的应用场景往，要传递很多参数，
+	//以达到解决特定问题的目的。有时候应用中，同一种规则可能会反复使用，这就可能会造成代码的重复性。
+	function check(reg, txt) {
+		return reg.test(txt)
+	}
+	
+	check(/\d+/g, 'test') //false
+	check(/[a-z]+/g, 'test') //true
+	
+	//柯里化以后
+	function curryingCheck(reg) {
+		return function(txt) {
+			return reg.test(txt);
+		}
+	}
+	
+	var hasNumber = curryingCheck(/\d+/g);
+	var hasLetter = curryingCheck(/[a-z]+/g);
+	
+	hasNumber('test') //false
+	hasLetter('123') //true
+	
+	//2、延迟运行 就是不断的累积参数，最后执行
+	let calMonthCost = progressCurrying(function(...rest) {
+		let costList = Array.from(rest)
+		return costList.reduce((pre,cur) => {
+			return pre + cur
+		})
+	})
+	calMonthCost(1)
+	calMonthCost(2)
+	calMonthCost(3)
+	calMonthCost(4)
+	calMonthCost(5)
+	console.log(calMonthCost())
+	
+	//3、固定易变因素 柯里化特性决定了它这应用场景。提前把易变因素，传参固定下来，生成一个更明确的应用函数。
+	//最典型的代表应用，是bind函数用以固定this这个易变对象。
+	Function.prototype.bind = function(context) {
+		var _this = this;
+		var args = Array.prototype.slice.call(arguments, 1);
+		return function() {
+			return _this.apply(context, args.concat(Array.prototype.slice.call(arguments)));
+		}
+	}
 	
 </script> 

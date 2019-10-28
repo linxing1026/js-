@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<body>
+	</body>
+</html>
+<script type="text/javascript">
+	//是把接受多个参数的函数变换成接受一个单一参数（最初函数的第一个参数）的函数，
+	//并且返回接受余下的参数而且返回结果的新函数的技术。
+	//简单理解就是用闭包把参数保存起来，当参数的数量足够执行函数了，就开始执行函数。
+	
+	//普通函数
+	function add(x, y) {
+		return x + y;
+	}
+	//柯里化后
+	function curryingAdd(x) {
+		return function(y) {
+			return x + y;
+		}
+	}
+	
+	add(1, 2) //3
+	curryingAdd(1, 2) //3
+	
+	//实际上把add函数的x,y两个参数变成了用一个函数先接收x，然后返回一个函数去处理y参数。
+	//柯里化有什么好处？？？
+	
+	//1.参数复用
+	function check(reg, txt) {
+		return reg.test(txt)
+	}
+	
+	check(/\d+/g, 'test') //false
+	check(/[a-z]+/g, 'test') //true
+	
+	//柯里化以后
+	function curryingCheck(reg) {
+		return function(txt) {
+			return reg.test(txt);
+		}
+	}
+	
+	var hasNumber = curryingCheck(/\d+/g);
+	var hasLetter = curryingCheck(/[a-z]+/g);
+	
+	hasNumber('test') //false
+	hasLetter('123') //true
+	
+	//2、延迟运行 就是不断的累积参数，最后执行
+	let calMonthCost = progressCurrying(function(...rest) {
+		let costList = Array.from(rest)
+		return costList.reduce((pre,cur) => {
+			return pre + cur
+		})
+	})
+	calMonthCost(1)
+	calMonthCost(2)
+	calMonthCost(3)
+	calMonthCost(4)
+	calMonthCost(5)
+	console.log(calMonthCost())
+	
+	//3、bind实现
+	Function.prototype.bind = function(context) {
+		var _this = this;
+		var args = Array.prototype.slice.call(arguments, 1);
+		return function() {
+			return _this.apply(context, args);
+		}
+	}
+	
+	//初步封装
+	function curry(fn) {
+		var args = [].slice.call(arguments, 1);
+		return function() {
+			var newArgs = args.concat([].slice.call(arguments));
+			return fn.apply(this, newArgs);
+		}
+	}
+	function add(a,b){
+		return a + b;
+	}
+	function mult(c,d){
+		return c*d;
+	}
+	var addCurry = curry(add);
+	console.log(addCurry(2,4));
+	
+	// 支持多参数传递
+	function progressCurrying(fn, ...args) {
+	
+	    var _this = this
+	    var len = fn.length;
+	    var args = args || [];
+	
+	    return function() {
+	        Array.prototype.push.apply(args, arguments);
+	        // 如果收集到参数个数小于最初的fn.length，则递归调用，继续收集参数
+	        if (args.length < len) {
+	            return progressCurrying.call(_this, fn, args);
+	        }
+	        // 参数收集完毕，则执行fn
+	        return fn.apply(this, args);
+	    }
+	}
+	
+	var res2 = progressCurrying(function(...args){
+		let resList = [...args];
+		console.log(resList)
+		return resList.reduce((pre, cur) => {
+			return pre * cur
+		})
+	});
+	res2(1) //并未执行
+	res2(2) //并未执行
+	res2(3) //并未执行
+	console.log(res2()) //3
+	
+</script> 
